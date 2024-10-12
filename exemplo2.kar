@@ -1,0 +1,58 @@
+
+void main () {
+  newVar float n;
+  newVar float r;
+
+  n = readInput();
+  r = sqrt(n);
+
+  printOut(r);
+}
+
+fun boolean is_different(float a, float b) {
+  newVar float epsilon;
+  newVar float aux;
+  epsilon = 15E-05;
+  aux = a - b;
+  return aux > epsilon | aux < (0 - epsilon);
+}
+
+fun float sqrt (float n) {
+  newVar float pivot1;
+  newVar float pivot2;
+  newVar float curr;
+  newVar float aux;
+  newVar float epsilon;
+  newVar boolean auxGtN;
+  newVar boolean auxLtN;
+
+  pivot1 = 0;
+  pivot2 = n;
+  curr = n/2;
+  aux = 0;
+
+  auxGtN = false;
+  auxLtN = false;
+
+  epsilon = 15E-05;
+
+  while is_different(aux, n) & is_different(pivot1, pivot2) {
+    aux = curr * curr;
+    auxGtN = (n - aux) < (0 - epsilon);
+    auxLtN = (n - aux) > epsilon;
+
+    if auxGtN then {
+      pivot2 = curr;
+      curr = (curr+pivot1)/2;
+      printOut(99999);
+    };
+
+    if auxLtN then {
+      printOut(n - aux);
+      pivot1 = curr;
+      curr = (curr+pivot2)/2;
+    };
+  };
+
+  return curr;
+}

@@ -1,0 +1,257 @@
+PARSER_BEGIN(Karloff)
+
+import java.io.*;
+import java.util.ArrayList;
+import ast.*;
+
+public class Karloff {
+  public static void main(String args[]) throws ParseException,IOException {
+    Karloff analisador = new Karloff(new FileInputStream(args[0]));
+    Transpiler transpiler = new Transpiler(analisador.Karloff());
+
+    if (args.length == 1) {
+      transpiler.transpile(args[0] + ".cpp");
+    } else if (args.length == 2) {
+      transpiler.compile(args[0] + ".cpp", args[1]);
+    }
+  }
+}
+
+PARSER_END(Karloff)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN :
+{
+  <VOID: "void">
+| <MAIN: "main">
+| <APAR: "(">
+| <FPAR: ")">
+| <ACHAVES: "{">
+| <FCHAVES: "}">
+| <NEWVAR: "newVar">
+| <SEMICOLON: ";">
+| <FLOAT: "float">
+| <BOOLEAN: "boolean">
+| <ASSIGN: "=">
+| <IF: "if">
+| <THEN: "then">
+| <WHILE: "while">
+| <READINPUT: "readInput">
+| <RETURN: "return">
+| <PRINTOUT: "printOut">
+| <TRUE: "true">
+| <FALSE: "false">
+| <OPSUM: "+">
+| <OPSUB: "-">
+| <OPMUT: "*">
+| <OPDIV: "/">
+| <OPAND: "&">
+| <OPOR: "|">
+| <OPLT: "<">
+| <OPGT: ">">
+| <OPEQ: "==">
+| <COMMA: ",">
+| <FUN: "fun">
+}
+
+TOKEN :
+{
+  <#LETTER: (["a"-"z", "A"-"Z"])+>
+| <#DIGIT: (["0"-"9"])>
+| <#DIGITS: (<DIGIT>)+>
+| <#OPTFRAC: ("."<DIGITS>)?>
+| <#OPTEXP: ("E" ("+"|"-")? <DIGITS>)?>
+| <#LETTERORDIGIT: (<LETTER> | <DIGIT>)>
+| <#UNDERSCOREDEND: ("_" (<LETTERORDIGIT>)+ )>
+
+| <ID: <LETTER> (<LETTERORDIGIT>)* (<UNDERSCOREDEND>)*>
+| <NUMLITERAL: <DIGITS> <OPTFRAC> <OPTEXP>>
+}
+
+//| <ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"])*>
+//| <: "">
+
+/*
+void Karloff () :
+{Token t;}
+{
+
+(
+  <VOID> <MAIN> <APAR> <FPAR> { System.out.println("Palavra reservada: main");}
+| <ACHAVES> { System.out.println("Abre chaves: {");}
+| <FCHAVES> { System.out.println("Fecha chaves: }");}
+| <>
+| t=<NUMLITERAL> { System.out.println("Número: "+ t.image);}
+| t=<ID> { System.out.println("Identificador: "+ t.image);}
+)*
+<EOF> 
+
+}
+*/
+
+Prog Karloff () :
+{Main m; ArrayList<Fun> funs = new ArrayList<Fun>();}
+{
+  m=MainF() (Func(funs))? <EOF>
+  {return new Prog(m, funs);}
+}
+
+Main MainF () :
+{
+  ArrayList<VarDecl> vars = new ArrayList<VarDecl>();
+  ArrayList<Comando> coms = new ArrayList<Comando>();
+}
+{
+  <VOID> <MAIN> <APAR> <FPAR> <ACHAVES> VarDeclL(vars, coms) <FCHAVES> 
+  {return new Main(vars, coms);}
+}
+/*
+void VarDeclF (ArrayList<VarDecl> vars) :
+{String tipo; Token id;}
+{
+  (<NEWVAR> tipo=Tipo() id=<ID> {vars.add(new VarDecl(tipo, id.image));} <SEMICOLON> VarDeclL(vars))?
+}
+*/
+void VarDeclL (ArrayList<VarDecl> vars, ArrayList<Comando> coms) :
+{String tipo; Token id;}
+{
+  <NEWVAR> tipo=Tipo() id=<ID> <SEMICOLON> {vars.add(new VarDecl(tipo, id.image));} VarDeclL(vars, coms)
+  | SeqComandos(coms)
+}
+
+String Tipo () :
+{Token t;}
+{
+(
+  t=<FLOAT>
+| t=<BOOLEAN>
+| t=<VOID>
+)
+  {return t.image;}
+}
+
+void SeqComandos (ArrayList<Comando> coms) :
+{}
+{
+  (ComandoF(coms))*
+}
+
+void ComandoF (ArrayList<Comando> coms) :
+{
+  Token id = null;
+  Token readInput = null;
+  ArrayList<Exp> exps = new ArrayList<Exp>();
+
+  Exp expIfOrAttrib = null;
+  Exp expWhile = null;
+  Exp expReturn = null;
+  Exp expPrint = null;
+  ArrayList<Comando> body = new ArrayList<Comando>();
+
+  Exp result;
+}
+{
+  id=<ID> 
+  (<ASSIGN> (
+    expIfOrAttrib=ExpF(false) <SEMICOLON> {coms.add(new CAtribuicao(0, id.image, expIfOrAttrib));}
+  | readInput=<READINPUT> <APAR> <FPAR> <SEMICOLON> {coms.add(new CReadInput(0, id.image));}
+  )
+  | <APAR> (ListaExp(exps))? <FPAR> <SEMICOLON> {coms.add(new CChamadaFun(0, id.image, exps));}
+  )
+| <IF> expIfOrAttrib=ExpF(false) <THEN> <ACHAVES> SeqComandos(body) <FCHAVES> <SEMICOLON> {coms.add(new CIf(0, expIfOrAttrib, body));}
+| <WHILE> expWhile=ExpF(false) <ACHAVES> SeqComandos(body) <FCHAVES> <SEMICOLON> {coms.add(new CWhile(0, expWhile, body));}
+| <RETURN> expReturn=ExpF(false) <SEMICOLON> {coms.add(new CReturn(0, expReturn));}
+| <PRINTOUT> expPrint=ExpF(false) <SEMICOLON> {coms.add(new CPrint(0, expPrint));}
+}
+
+Exp ExpF (boolean parentheses) :
+{String op; Exp opnd1; Exp opnd2 = null;}
+{
+  opnd1=Fator() (op=Op() opnd2=ExpF(false) {return new EOpExp(op, opnd1, opnd2, parentheses);})? {return opnd1;}
+| <APAR> opnd1=ExpF(true) <FPAR> (op=Op() opnd2=ExpF(false) {return new EOpExp(op, opnd1, opnd2, parentheses);})? {return opnd1;}
+}
+
+Exp Fator () :
+{
+  Token efloat = null;
+  Token etrue = null;
+  Token efalse = null;
+  Token id;
+  ArrayList<Exp> args = new ArrayList<Exp>();
+}
+{
+  id=<ID> (<APAR>  (ListaExp(args))? <FPAR> {return new EChamadaFun(id.image, args);})? {return new EVar(id.image);}
+| efloat=<NUMLITERAL> {
+  float f = 0;
+  try {
+    f = Float.parseFloat(efloat.image);
+  } catch (Exception e) {}
+  return new EFloat(f);
+}
+| etrue=<TRUE> {return new ETrue();}
+| efalse=<FALSE> {return new EFalse();}
+}
+
+String Op () :
+{Token op;}
+{
+(
+  op=<OPSUM> | op=<OPSUB>
+| op=<OPMUT> | op=<OPDIV>
+| op=<OPAND> | op=<OPOR>
+| op=<OPLT>  | op=<OPGT>
+| op=<OPEQ>
+)
+  {return op.image;}
+}
+
+void ListaExp (ArrayList<Exp> exps) :
+{Exp exp;}
+{
+  exp=ExpF(false) {exps.add(exp);} ListaExpL(exps)
+}
+
+void ListaExpL (ArrayList<Exp> exps) :
+{Exp exp;}
+{
+  (<COMMA> exp=ExpF(false) {exps.add(exp);} ListaExpL(exps))?
+}
+
+void Func (ArrayList<Fun> funs) :
+{}
+{
+  (Func2(funs))+
+}
+
+void Func2 (ArrayList<Fun> funs) :
+{
+  Token nome;
+  ArrayList<ParamFormalFun> params = new ArrayList<ParamFormalFun>();
+  String retorno;
+  ArrayList<VarDecl> vars = new ArrayList<VarDecl>();
+  ArrayList<Comando> body = new ArrayList<Comando>();
+}
+{
+  <FUN> retorno=Tipo() nome=<ID> <APAR> (ListaArg(params))? <FPAR> <ACHAVES> VarDeclL(vars, body) <FCHAVES> 
+    {funs.add(new Fun(nome.image, params, retorno, vars, body));}
+}
+
+void ListaArg (ArrayList<ParamFormalFun> params) :
+{String tipo; Token id;}
+{
+  tipo=Tipo() id=<ID> {params.add(new ParamFormalFun(tipo, id.image));} ListaArgL(params)
+}
+
+void ListaArgL (ArrayList<ParamFormalFun> params) :
+{String tipo; Token id;}
+{
+  (<COMMA> tipo=Tipo() id=<ID> {params.add(new ParamFormalFun(tipo, id.image));} ListaArgL(params))?
+}
+

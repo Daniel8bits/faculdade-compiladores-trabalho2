@@ -1,0 +1,44 @@
+
+void main () {
+
+  newVar float n;
+  newVar float x;
+  newVar float r;
+  newVar float n_polys;
+  newVar boolean end;
+  
+  r = 0;
+  end = false;
+  n_polys = readInput();
+  x = readInput();
+
+  while end == false {
+    n = readInput();
+
+    r = r + poly(fibonacci(n), x, n_polys);
+
+    n_polys = n_polys - 1;
+    end = (0 == n_polys);
+  };
+
+  printOut(r);
+
+}
+
+fun float poly (float n, float x, float p) {
+  newVar float r;
+  r = 1;
+  while p > 0 {
+    r = r * x;
+    p = p - 1;
+  };
+  return n * r;
+}
+
+fun float fibonacci (float n) {
+  if n < 1 | n == 1 then {
+    return n;
+  };
+
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
