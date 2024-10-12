@@ -23,6 +23,21 @@ public class Fun {
 		this.body = body;
 	}
 
+  public String getPrototype() {
+		String params_str = "";
+		String param_str;
+		String return_str = retorno;
+
+		for(int i = 0; i < params.size(); i++) {
+			param_str = params.get(i).getType();
+			params_str += (i+1 == params.size() ? param_str : param_str + ", ");
+		}
+
+		if (retorno.equals("boolean")) return_str = "bool";
+
+		return return_str + " " + nome + "(" + params_str + ");\n";
+	}
+
 	@Override
   public String toString() {
 		String params_str = "";

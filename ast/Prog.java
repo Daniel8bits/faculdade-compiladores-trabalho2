@@ -13,9 +13,16 @@ public class Prog {
 
   @Override
   public String toString() {
-    String[] str = new String[]{""};
-    fun.stream().forEach(f -> str[0] += f.toString());
-    return "#include <iostream>\n\n" + str[0] + "\n" + main.toString();
+    String fun_str = "";
+    String prototype_str = "";
+    //fun.stream().forEach(f -> fun_str[0] += f.toString());
+
+    for (int i = 0; i < fun.size(); i++) {
+      fun_str += fun.get(i).toString();
+      prototype_str += fun.get(i).getPrototype();
+    }
+
+    return "#include <iostream>\n\n" + prototype_str + "\n" + main.toString() + "\n" + fun_str;
   }
 }
 

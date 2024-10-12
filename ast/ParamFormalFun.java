@@ -9,8 +9,12 @@ public class ParamFormalFun {
     this.var = var;
   }
 
+  public String getType() {
+    return type.equals("boolean") ? "bool" : type;
+  }
+
   @Override
   public String toString() {
-    return type + " " + var;
+    return getType() + " " + var;
   }
 }

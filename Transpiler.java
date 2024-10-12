@@ -30,7 +30,7 @@ public class Transpiler {
 
   public void compile(String pathname, String executableName) {
     transpile(pathname);
-    sys("g++ " + pathname + " -o " + OUT_DIR + executableName);
+    sys("g++ " + OUT_DIR + pathname + " -o " + OUT_DIR + executableName);
   }
 
   private void sys(String command) {

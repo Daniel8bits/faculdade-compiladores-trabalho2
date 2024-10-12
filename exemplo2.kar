@@ -9,14 +9,6 @@ void main () {
   printOut(r);
 }
 
-fun boolean is_different(float a, float b) {
-  newVar float epsilon;
-  newVar float aux;
-  epsilon = 15E-05;
-  aux = a - b;
-  return aux > epsilon | aux < (0 - epsilon);
-}
-
 fun float sqrt (float n) {
   newVar float pivot1;
   newVar float pivot2;
@@ -44,15 +36,21 @@ fun float sqrt (float n) {
     if auxGtN then {
       pivot2 = curr;
       curr = (curr+pivot1)/2;
-      printOut(99999);
     };
 
     if auxLtN then {
-      printOut(n - aux);
       pivot1 = curr;
       curr = (curr+pivot2)/2;
     };
   };
 
   return curr;
+}
+
+fun boolean is_different(float a, float b) {
+  newVar float epsilon;
+  newVar float aux;
+  epsilon = 15E-05;
+  aux = a - b;
+  return aux > epsilon | aux < (0 - epsilon);
 }
